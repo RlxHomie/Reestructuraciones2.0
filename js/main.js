@@ -51,7 +51,7 @@ function validarInputNumerico(input, min = 0, max = Infinity) {
 
 const GoogleSheetsModule = (function() {
   // URL del script de Google Apps Script
-  const GOOGLE_SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbxLEVjy-I3.../exec";
+  const GOOGLE_SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbx-evKLIAg8i1zEDKElx_Lu-RtKDxuleI-TYc55DLnHiHa0I-gZy_i1yD_CUBpbxW7l/exec";
   
   // Variables para almacenar datos cargados
   let entidades = [];
