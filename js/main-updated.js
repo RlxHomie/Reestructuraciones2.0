@@ -122,6 +122,7 @@ const GoogleSheetsModule = (function() {
       formData.append("ahorro", datosContrato.ahorro);
       formData.append("totalAPagar", datosContrato.totalAPagar);
       formData.append("cuotaMensual", datosContrato.cuotaMensual);
+      formData.append("numCuotas", datosContrato.numCuotas); // Añadido número de cuotas
       
       // Detalles de cada línea de contrato
       if (datosContrato.detalles && datosContrato.detalles.length > 0) {
@@ -162,6 +163,7 @@ const GoogleSheetsModule = (function() {
       formData.append("deudaDescontada", datosHistorial.deudaDescontada);
       formData.append("ahorro", datosHistorial.ahorro);
       formData.append("totalAPagar", datosHistorial.totalAPagar);
+      formData.append("numCuotas", datosHistorial.numCuotas); // Añadido número de cuotas
       
       fetch(GOOGLE_SHEET_ENDPOINT, {
         method: "POST",
@@ -199,6 +201,7 @@ const GoogleSheetsModule = (function() {
       formData.append("ahorro", datosContrato.ahorro);
       formData.append("totalAPagar", datosContrato.totalAPagar);
       formData.append("cuotaMensual", datosContrato.cuotaMensual);
+      formData.append("numCuotas", datosContrato.numCuotas); // Añadido número de cuotas
       
       // Detalles de cada línea de contrato
       if (datosContrato.detalles && datosContrato.detalles.length > 0) {
@@ -290,6 +293,9 @@ const TablaDeudasModule = (function() {
         }, 300)
       );
     }
+    
+    // Aplicar corrección de formato numérico a los campos existentes
+    corregirFormatoNumerico();
   }
 
   function agregarFila() {
@@ -358,6 +364,7 @@ const TablaDeudasModule = (function() {
     const inputDeudaOrig = document.createElement("input");
     inputDeudaOrig.type = "number";
     inputDeudaOrig.placeholder = "3000";
+    inputDeudaOrig.value = ""; // Iniciar vacío en lugar de 0
     tdDeudaOrig.appendChild(inputDeudaOrig);
 
     // 5) % Descuento
@@ -365,6 +372,7 @@ const TablaDeudasModule = (function() {
     const inputDesc = document.createElement("input");
     inputDesc.type = "number";
     inputDesc.placeholder = "30";
+    inputDesc.value = ""; // Iniciar vacío en lugar de 0
     tdDescuento.appendChild(inputDesc);
 
     // 6) Importe con Descuento
@@ -396,6 +404,9 @@ const TablaDeudasModule = (function() {
     fila.appendChild(tdEliminar);
 
     tablaDeudasBody.appendChild(fila);
+    
+    // Aplicar corrección de formato numérico a los nuevos campos
+    corregirFormatoNumerico();
   }
 
   function recalcularFila(fila) {
@@ -487,7 +498,7 @@ const TablaDeudasModule = (function() {
       const tdDeudaOrig = document.createElement("td");
       const inputDeudaOrig = document.createElement("input");
       inputDeudaOrig.type = "number";
-      inputDeudaOrig.value = detalle.deudaOriginal || "";
+      inputDeudaOrig.value = detalle.deudaOriginal ? detalle.deudaOriginal.toString() : "";
       inputDeudaOrig.placeholder = "3000";
       tdDeudaOrig.appendChild(inputDeudaOrig);
       
@@ -495,7 +506,7 @@ const TablaDeudasModule = (function() {
       const tdDescuento = document.createElement("td");
       const inputDesc = document.createElement("input");
       inputDesc.type = "number";
-      inputDesc.value = detalle.porcentajeDescuento || "";
+      inputDesc.value = detalle.porcentajeDescuento ? detalle.porcentajeDescuento.toString() : "";
       inputDesc.placeholder = "30";
       tdDescuento.appendChild(inputDesc);
       
@@ -538,13 +549,59 @@ const TablaDeudasModule = (function() {
     if (datosContrato.numCuotas) {
       document.getElementById("numCuotas").value = datosContrato.numCuotas;
     }
+    
+    // Aplicar corrección de formato numérico a los campos cargados
+    corregirFormatoNumerico();
+  }
+  
+  // Función para corregir el formato de los campos numéricos
+  function corregirFormatoNumerico() {
+    // Seleccionar todos los inputs numéricos en la tabla
+    const inputsNumericos = document.querySelectorAll('#tablaDeudas input[type="number"]');
+    
+    // Para cada input, añadir eventos para manejar el formato
+    inputsNumericos.forEach(input => {
+      // Al enfocar, eliminar ceros iniciales
+      input.addEventListener('focus', function() {
+        // Si el valor es solo cero, vaciar el campo
+        if (this.value === '0' || this.value === 0) {
+          this.value = '';
+        }
+        // Si tiene ceros al inicio, eliminarlos
+        else if (this.value.startsWith('0') && this.value.length > 1 && !this.value.startsWith('0.')) {
+          this.value = parseFloat(this.value).toString();
+        }
+      });
+      
+      // Al perder el foco, formatear correctamente
+      input.addEventListener('blur', function() {
+        // Si está vacío, no hacer nada (no poner cero)
+        if (this.value === '') {
+          return;
+        }
+        
+        // Convertir a número y formatear
+        const valor = parseFloat(this.value);
+        if (!isNaN(valor)) {
+          // Para campos de porcentaje, no usar decimales
+          if (this.closest('td').cellIndex === 4) { // Columna de % Descuento
+            this.value = Math.round(valor);
+          } 
+          // Para campos de importe, usar dos decimales
+          else {
+            this.value = valor.toString();
+          }
+        }
+      });
+    });
   }
 
   return {
     init,
     agregarFila,
     recalcularFila,
-    cargarDatosContrato
+    cargarDatosContrato,
+    corregirFormatoNumerico
   };
 })();
 
@@ -922,16 +979,24 @@ const SimuladorModule = (function() {
     TablaDeudasModule.agregarFila();
   }
 
+  // Función mejorada para descargar PDF
   function descargarPlan() {
+    // Mostrar notificación de inicio
+    mostrarNotificacion("Generando PDF, por favor espere...", "info");
+    
     window.scrollTo(0, 0);
     const planDiv = document.getElementById("plan-de-liquidacion");
-    if (!planDiv) return;
-
+    if (!planDiv) {
+      mostrarNotificacion("Error: No se encontró el contenido del plan", "error");
+      return;
+    }
+    
+    // Preparar datos para el nombre del archivo
     const fechaFilename = (planFecha?.textContent || "").replaceAll("/", "-");
     const nombreDeudor = (planNombreDeudor?.textContent || "Simulacion").trim();
     const folioActual = planFolio?.textContent || "";
-
-    // Configuración mejorada para la generación del PDF
+    
+    // Configuración para html2pdf
     const opt = {
       margin: [10, 10, 10, 10],
       filename: `${nombreDeudor}_${fechaFilename}_${folioActual.replace("FOLIO-", "")}.pdf`,
@@ -951,21 +1016,34 @@ const SimuladorModule = (function() {
         format: "a4",
         orientation: "portrait",
         compress: true
-      },
-      pagebreak: { mode: ["avoid-all", "css", "legacy"] }
+      }
     };
-
-    // Mostrar notificación de inicio
-    mostrarNotificacion("Generando PDF, por favor espere...", "info");
-
-    // Usar una promesa para manejar la generación del PDF
-    html2pdf().from(planDiv).set(opt).save()
-      .then(() => {
-        mostrarNotificacion("PDF generado correctamente", "success");
+    
+    // Usar el método .save() directamente en lugar de encadenarlo
+    const pdf = html2pdf();
+    pdf.set(opt);
+    
+    // Usar promesas para manejar el proceso
+    pdf.from(planDiv)
+      .outputPdf()
+      .then(function(pdf) {
+        // Forzar la descarga usando un enlace
+        const blob = new Blob([pdf], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = opt.filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          mostrarNotificacion("PDF descargado correctamente", "success");
+        }, 100);
       })
-      .catch(error => {
+      .catch(function(error) {
         console.error("Error al generar PDF:", error);
-        mostrarNotificacion("Error al generar PDF. Intente nuevamente.", "error");
+        mostrarNotificacion("Error al generar PDF: " + error, "error");
       });
   }
 
