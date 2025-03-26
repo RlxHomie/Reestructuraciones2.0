@@ -490,7 +490,7 @@ const HistorialModule = (function() {
 
 const GoogleSheetsModule = (function() {
   // URL del script de Google Apps Script
-  const GOOGLE_SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbxLEVjy-I3.../exec";
+  const GOOGLE_SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbxoaiW-lRyh3q8iZEDf3tSE7kEZN5Vjt5WKVuF7fQj6XaHOjQ8hNB4BoZZ8XGxa0Fh4/exec";
   
   // Función para guardar datos de contrato en Google Sheets
   function guardarContrato(datosContrato) {
