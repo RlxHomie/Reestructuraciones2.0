@@ -4,6 +4,8 @@
 const HOJA_CONTRATOS = "Contratos";
 const HOJA_DETALLES = "DetallesContratos";
 const HOJA_HISTORIAL = "Historial";
+const HOJA_ENTIDADES = "Entidades";
+const HOJA_TIPOS_PRODUCTO = "TiposProducto";
 
 /**
  * doPost(e) recibe los datos en formato URL-encoded.
@@ -337,19 +339,29 @@ function obtenerDetallesContrato(e) {
  * doGet(e) para obtener datos de entidades y tipos de producto
  */
 function doGet(e) {
-  // Supongamos que tienes dos hojas: "Entidades" y "TiposProducto"
-  // Cada una con una lista (col A) de cadenas
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     
-    const sheetEnt = ss.getSheetByName("Entidades");
+    // Obtener entidades desde la hoja "Entidades"
+    const sheetEnt = ss.getSheetByName(HOJA_ENTIDADES);
+    if (!sheetEnt) {
+      return ContentService.createTextOutput(JSON.stringify({ error: "No existe la hoja de entidades" }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
     const lastRowEnt = sheetEnt.getLastRow();
-    const dataEnt = sheetEnt.getRange(1,1,lastRowEnt,1).getValues();
+    const dataEnt = sheetEnt.getRange(1, 1, lastRowEnt, 1).getValues();
     const entidades = dataEnt.map(row => row[0]);
 
-    const sheetTipo = ss.getSheetByName("TiposProducto");
+    // Obtener tipos de producto desde la hoja "TiposProducto"
+    const sheetTipo = ss.getSheetByName(HOJA_TIPOS_PRODUCTO);
+    if (!sheetTipo) {
+      return ContentService.createTextOutput(JSON.stringify({ error: "No existe la hoja de tipos de producto" }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
     const lastRowTipo = sheetTipo.getLastRow();
-    const dataTipo = sheetTipo.getRange(1,1,lastRowTipo,1).getValues();
+    const dataTipo = sheetTipo.getRange(1, 1, lastRowTipo, 1).getValues();
     const tiposProducto = dataTipo.map(row => row[0]);
 
     const result = { entidades, tiposProducto };
@@ -357,7 +369,7 @@ function doGet(e) {
       .setMimeType(ContentService.MimeType.JSON);
   }
   catch(err){
-    return ContentService.createTextOutput("ERROR: "+err)
+    return ContentService.createTextOutput(JSON.stringify({ error: err.toString() }))
       .setMimeType(ContentService.MimeType.TEXT);
   }
 }
