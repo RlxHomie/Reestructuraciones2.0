@@ -105,7 +105,7 @@ function validarDNI(dni) {
 const GoogleSheetsModule = (function() {
   // URL del script de Google Apps Script
   // Esta URL debe ser actualizada con la URL real del script desplegado
-  const GOOGLE_SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbwKkIakj8f7EegwblR5cBozJY8kCAFIpHIdhEqhBCGY81nBs3nGZBAXTsnk-OCNpnKB/exec";
+  const GOOGLE_SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbxHxwFkxuQcn7pTUjr6YS09hV6aP1nzDi7NcJz-akya5SmW5dn5qzBpixxyHPV22BV1tw/exec";
   
   // Variables para almacenar datos cargados
   let entidades = ["Banco Santander", "BBVA", "CaixaBank", "Bankinter", "Sabadell"];
