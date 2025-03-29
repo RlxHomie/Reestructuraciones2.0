@@ -113,12 +113,25 @@ const GoogleSheetsModule = (function() {
   let datosEntidadesCargados = true;
   
   // Función para cargar entidades y tipos de producto desde Google Sheets
-  function cargarEntidadesYTipos() {
-    return new Promise((resolve, reject) => {
-      // Usamos datos predefinidos para evitar problemas de CORS
-      resolve({ entidades, tiposProducto });
-    });
-  }
+function cargarEntidadesYTipos() {
+  return new Promise((resolve, reject) => {
+    // Define la función de callback global que recibirá la respuesta
+    window.miCallback = function(data) {
+      resolve(data);
+      // Limpieza: elimina la función y el script insertado
+      delete window.miCallback;
+      document.body.removeChild(script);
+    };
+
+    // Crea un elemento script con la URL del endpoint, agregando el parámetro callback
+    const script = document.createElement('script');
+    script.src = GOOGLE_SHEET_ENDPOINT + '?callback=miCallback';
+    script.onerror = function(error) {
+      reject(error);
+    };
+    document.body.appendChild(script);
+  });
+}
   
   // Función para guardar contrato en Google Sheets
   function guardarContrato(datosContrato) {
